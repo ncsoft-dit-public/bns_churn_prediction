@@ -9,7 +9,7 @@ GAME DATA MINING COMPETITION 2017 : <a href="https://cilab.sejong.ac.kr/gdmc2017
 
 ## Contributer
 
-* suhyuk.park(psyoblade@gmail.com), senior developer in ncsoft
+* suhyuk.park(park.suhyuk@gmail.com), senior developer in ncsoft
 * yonghwan.lee(leeyh0216@gmail.com), junior developer in ncsoft
 
 ## Requirements
