@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 import sys
 
+ARFF = True
 DEBUG = False
 BREAKNO = 65535
 
@@ -137,7 +138,10 @@ def main():
         x = ""
         for string in strings:
             x += "%f,%f,%f,%f,%s\n" % string
-        print(arff % x)
+        if ARFF:
+            print(arff % x)
+        else:
+            print(x)
     except:
         import traceback
         traceback.print_exc(sys.stderr)
@@ -146,11 +150,14 @@ def exit():
     sys.exit(0)
 
 def print_usage():
-    print("python train.py data > ~/workspace/weka/bns/bns_churn_detection.arff")
+    print("python prepare.py data weka > ~/workspace/weka/bns/bns_churn_detection.arff")
+    print("python prepare.py data tf > ~/workspace/weka/bns/bns_churn_detection.csv")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         print_usage()
         exit()
+    if sys.argv[2] == "tf":
+        ARFF = False
     main()
 
