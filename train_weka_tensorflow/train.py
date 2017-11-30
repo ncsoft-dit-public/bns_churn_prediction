@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 
 # CSV 파일을 읽어들임
-data = np.loadtxt('./bns_churn_detection.csv', delimiter=',', unpack=True, dtype='float32')
+data = np.loadtxt('weka/bns_churn_detection_nan.csv', delimiter=',', unpack=True, dtype='float32')
 x_data = np.transpose(data[0:4])
 y_data = np.transpose(data[4:])
 
@@ -29,7 +29,7 @@ session = tf.Session()
 session.run(init)
 
 # 100번 학습 진행
-for step in range(500):
+for step in range(1000):
     session.run(train_op, feed_dict={X: x_data, Y: y_data})
     # 10번에 1번씩 결과 출력
     if (step + 1) % 50 == 0:
