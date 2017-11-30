@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 
 # CSV 파일을 읽어들임
-data = np.loadtxt('weka/bns_churn_detection_nan.csv', delimiter=',', unpack=True, dtype='float32')
+data = np.loadtxt('data/bns_churn_detection_nan.csv', delimiter=',', unpack=True, dtype='float32')
 x_data = np.transpose(data[0:4])
 y_data = np.transpose(data[4:])
 
