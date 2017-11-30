@@ -150,8 +150,8 @@ def exit():
     sys.exit(0)
 
 def print_usage():
-    print("python prepare.py data weka > ~/workspace/weka/bns/bns_churn_detection.arff")
-    print("python prepare.py data tf > ~/workspace/weka/bns/bns_churn_detection.csv")
+    print("python prepare.py data weka > ~/workspace/weka/bns_churn_detection.arff")
+    print("python prepare.py data tf > ~/workspace/weka/bns_churn_detection.csv")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
