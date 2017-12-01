@@ -4,47 +4,66 @@ import sys
 import tensorflow as tf
 import numpy as np
 
-NODE1 = 20
-NODE2 = 20
-NODE3 = 20
-NODE4 = 20
-BATCH = 1000
-
+#
+# https://www.analyticsvidhya.com/blog/2016/10/an-introduction-to-implementing-neural-networks-using-tensorflow/
+#
 # CSV 파일을 읽어들임
 data = np.loadtxt('data/bns_churn_detection_nan.csv', delimiter=',', unpack=True, dtype='float32')
+
+# 1. 일반적인 데이터 추출
 x_data = np.transpose(data[0:4])
 y_data = np.transpose(data[4:])
+
+# 2. 미니배치 데이터 추출
+dataset_length = len(data[1])
+
+x = 100
+nodes = 20
+learning_rate = 0.0001 # 학습률을 높이면 빠르게 학습은 되지만 local-maxima 에 빠지기 쉬워서 정확률의 편차가 커지더라 or Batch Normalization 적용
+
+input = 4
+batch_size = 100
+batch_step = 8
+total_batch = int(dataset_length/batch_size)
+
+def exit(code=0):
+    sys.exit(code)
 
 # 모델 구성을 위한 변수생성
 global_step = tf.Variable(0, trainable=False, name='global_step')
 X = tf.placeholder(tf.float32)
 Y = tf.placeholder(tf.float32)
+keep_prob = tf.placeholder(tf.float32)
 
 # 신경망 모델 구성
 with tf.name_scope('layer1'):
-    W1 = tf.Variable(tf.random_uniform([4,NODE1],-1.,1.), name='W1')
+    W1 = tf.Variable(tf.random_normal([4,nodes],stddev=0.01), name='W1')
     L1 = tf.nn.relu(tf.matmul(X, W1))
+    L1 = tf.nn.dropout(L1, keep_prob)
 
 with tf.name_scope('layer2'):
-    W2 = tf.Variable(tf.random_uniform([NODE1,NODE2],-1.,1.), name='W2')
+    W2 = tf.Variable(tf.random_normal([nodes,nodes],stddev=0.01), name='W2')
     L2 = tf.nn.relu(tf.matmul(L1, W2))
+    L2 = tf.nn.dropout(L2, keep_prob)
 
 with tf.name_scope('layer3'):
-    W3 = tf.Variable(tf.random_uniform([NODE2,NODE3],-1.,1.), name='W3')
+    W3 = tf.Variable(tf.random_normal([nodes,nodes],stddev=0.01), name='W3')
     L3 = tf.nn.relu(tf.matmul(L2, W3))
+    L3 = tf.nn.dropout(L3, keep_prob)
 
 with tf.name_scope('layer4'):
-    W4 = tf.Variable(tf.random_uniform([NODE3,NODE4],-1.,1.), name='W4')
+    W4 = tf.Variable(tf.random_normal([nodes,nodes],stddev=0.01), name='W4')
     L4 = tf.nn.relu(tf.matmul(L3, W4))
+    L4 = tf.nn.dropout(L4, keep_prob)
 
 with tf.name_scope('output'):
-    W5 = tf.Variable(tf.random_uniform([NODE4, 3],-1.,1.), name='W5')
+    W5 = tf.Variable(tf.random_normal([nodes, 3],stddev=0.01), name='W5')
     model = tf.matmul(L4, W5)
 
 with tf.name_scope('optimizer'):
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=Y, logits=model))
-    optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
-    train_op = optimizer.minimize(cost, global_step=global_step)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, global_step=global_step)
+    # train_op = optimizer.minimize(cost, global_step=global_step)
     tf.summary.scalar('cost', cost)
 
 
@@ -60,23 +79,37 @@ else:
 merged = tf.summary.merge_all()
 writer = tf.summary.FileWriter('logs/logs', sess.graph)
 
-# 학습 및 모델 저장
-for step in range(BATCH):
-    sess.run(train_op, feed_dict={X: x_data, Y: y_data})
-    # 10번에 1번씩 결과 출력
-    if (step + 1) % 50 == 0:
-        print('Step: %d' % sess.run(global_step),
-              'Cost: %.3f' % sess.run(cost, feed_dict={X: x_data, Y: y_data}))
-    summary = sess.run(merged, feed_dict={X: x_data, Y: y_data})
-    writer.add_summary(summary, global_step=sess.run(global_step))
-saver.save(sess, 'ckpt/model/dnn.ckpt', global_step=global_step)
+# 총 5개의 학습집합 800 * 5 = 4000명
+for epoch in range(x):
+    total_cost = 0
+    # 800개를 100 * 8개의 미니배치로 수행
+    for step in range(total_batch):
+        batch_mask = np.random.random_integers(0, dataset_length-1, batch_size)
+        train_x = x_data[batch_mask]
+        train_y = y_data[batch_mask]
+        _, cost_val = sess.run([optimizer, cost],
+                 feed_dict={X: train_x,
+                            Y: train_y,
+                            keep_prob: 0.8})
+        # print('Step: %d/%d' % (step, sess.run(global_step)), 'Cost: %.3f' % sess.run(cost, feed_dict={X: train_x, Y: train_y}))
+        summary = sess.run(merged, feed_dict={X: train_x,
+                                              Y: train_y,
+                                              keep_prob: 0.8})
+        writer.add_summary(summary, global_step=sess.run(global_step))
+        total_cost += cost_val
+    print('Epoch:', '%04d' % (epoch + 1),
+          'Avg. cost =', '{:.3f}'.format(total_cost / total_batch))
 
 # 결과확인
 prediction = tf.argmax(model, axis=1)
 target = tf.argmax(Y, axis=1)
-print('예측값', sess.run(prediction, feed_dict={X: x_data}))
-print('실제값', sess.run(target, feed_dict={Y: y_data}))
-
+# print('예측값', sess.run(prediction, feed_dict={X: train_x}))
+# print('실제값', sess.run(target, feed_dict={Y: train_y}))
+saver.save(sess, 'ckpt/model/dnn.ckpt', global_step=global_step)
 is_correct = tf.equal(prediction, target)
 accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
-print('정확도: %d, %d, %d, %d, %d, %.2f%%' % (NODE1, NODE2, NODE3, NODE4, BATCH, sess.run(accuracy * 100, feed_dict={X: x_data, Y: y_data})))
+print('정확도: nodes:%d, %.2f%%' % (nodes, sess.run(accuracy * 100,
+                                                 feed_dict={X: train_x,
+                                                            Y: train_y,
+                                                            keep_prob: 1})))
+
