@@ -134,7 +134,7 @@ def traverse_dir(path):
 def main():
     try:
         load_answer("train_labeld.csv")
-        strings = traverse_dir("data")
+        strings = traverse_dir(sys.argv[1])
         x = ""
         for string in strings:
             x += "%f,%f,%f,%f,%s\n" % string

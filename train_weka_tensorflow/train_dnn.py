@@ -17,9 +17,10 @@ y_data = np.transpose(data[4:])
 # 2. 미니배치 데이터 추출
 dataset_length = len(data[1])
 
-x = 100
-nodes = 20
-learning_rate = 0.0001 # 학습률을 높이면 빠르게 학습은 되지만 local-maxima 에 빠지기 쉬워서 정확률의 편차가 커지더라 or Batch Normalization 적용
+# 79% x=400, nodes=60, learning_rate=0.00005, keep_prob=0.6
+x = 400
+nodes = 60
+learning_rate = 0.00005 # 학습률을 높이면 빠르게 학습은 되지만 local-maxima 에 빠지기 쉬워서 정확률의 편차가 커지더라 or Batch Normalization 적용
 
 input = 4
 batch_size = 100
@@ -53,7 +54,7 @@ with tf.name_scope('layer3'):
 
 with tf.name_scope('layer4'):
     W4 = tf.Variable(tf.random_normal([nodes,nodes],stddev=0.01), name='W4')
-    L4 = tf.nn.relu(tf.matmul(L3, W4))
+    L4 = tf.nn.relu(tf.matmul(L1, W2))
     L4 = tf.nn.dropout(L4, keep_prob)
 
 with tf.name_scope('output'):
@@ -90,11 +91,11 @@ for epoch in range(x):
         _, cost_val = sess.run([optimizer, cost],
                  feed_dict={X: train_x,
                             Y: train_y,
-                            keep_prob: 0.8})
+                            keep_prob: 0.6})
         # print('Step: %d/%d' % (step, sess.run(global_step)), 'Cost: %.3f' % sess.run(cost, feed_dict={X: train_x, Y: train_y}))
         summary = sess.run(merged, feed_dict={X: train_x,
                                               Y: train_y,
-                                              keep_prob: 0.8})
+                                              keep_prob: 0.6})
         writer.add_summary(summary, global_step=sess.run(global_step))
         total_cost += cost_val
     print('Epoch:', '%04d' % (epoch + 1),
